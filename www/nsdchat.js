@@ -1,5 +1,6 @@
+var NsdChat = function() {};
 NsdChat.prototype.initNsd = function(successCallback, errorCallback) {
-    cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "initNsd", ["Hi"]);
+    cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "initNsd", []);
 };
 NsdChat.prototype.startDiscovery = function(successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "startDiscovery", []);
@@ -17,5 +18,5 @@ NsdChat.prototype.stopNsd = function(successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "stopNsd", []);
 };
   
-var nsdchat = new nsdchat();  
-module.exports = nsdchat;
+var NsdChat = new NsdChat();  
+module.exports = NsdChat;

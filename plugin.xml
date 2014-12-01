@@ -11,7 +11,7 @@
     </engines>  
 
     <js-module src="www/nsdchat.js" name="nsdchat">
-        <clobbers target="nsdchat" />
+        <clobbers target="NsdChat" />
     </js-module>
 
     <platform name="android">
