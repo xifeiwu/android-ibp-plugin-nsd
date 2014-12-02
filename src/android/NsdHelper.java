@@ -140,14 +140,12 @@ public class NsdHelper {
         mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD,
                 mRegistrationListener);
         isServiceRegistered = true;
-        sendNotification("registerService", name + ":" + port + " has registered.");
     }
     public void unRegisterService() {
         if(isServiceRegistered){
             mNsdManager.unregisterService(mRegistrationListener);
         }
         isServiceRegistered = false;
-        sendNotification("unRegisterService", "service has registered.");
     }
 
     private boolean isDiscoverServicesStarted = false;
@@ -155,7 +153,6 @@ public class NsdHelper {
         mNsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD,
                 mDiscoveryListener);
         isDiscoverServicesStarted = true;
-        sendNotification("startDiscovery", "NSD has started.");
     }
 
     public void stopDiscovery() {
@@ -164,7 +161,6 @@ public class NsdHelper {
         }
         mServerInfoList.clear();
         isDiscoverServicesStarted = false;
-        sendNotification("stopDiscovery", "NSD has stoped.");
     }
 
     private JSONObject NsdServiceInfoToJSON(NsdServiceInfo info){
@@ -296,4 +292,3 @@ public class NsdHelper {
         mHandler.sendMessage(message);
     }
 }
-

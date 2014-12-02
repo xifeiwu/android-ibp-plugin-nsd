@@ -33,88 +33,140 @@ import android.view.View;
 public class NsdChatPlugin extends CordovaPlugin {
 	NsdHelper mNsdHelper;
 	public static final String TAG = "NsdChat";
+	private String serverName;
+	private int serverPort;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("initNsd")) {
+        switch(action){
+        case "initNsd":
             this.initNsd(callbackContext);
             PluginResult.Status status = PluginResult.Status.NO_RESULT;
             PluginResult pluginResult = new PluginResult(status);
             pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
-        }else{
-            if (action.equals("startDiscovery")) {
-                this.startDiscovery();
-            }    
-            if (action.equals("stopDiscovery")) {
-                this.stopDiscovery();
-            }    
-            if (action.equals("registerService")) {
-                this.registerService(args.getString(0), args.getInt(1));
-            }    
-            if (action.equals("unRegisterService")) {
-                this.unRegisterService();
-            }    
-            PluginResult.Status status = PluginResult.Status.NO_RESULT;
-            PluginResult pluginResult = new PluginResult(status);
-            pluginResult.setKeepCallback(false);
-            callbackContext.sendPluginResult(pluginResult);
+            break;
+        case "startDiscovery":
+            this.startDiscovery(callbackContext);
+            break;
+        case "stopDiscovery":
+            this.stopDiscovery(callbackContext);
+            break;
+        case "registerService":
+            serverName = args.getString(0);
+            serverPort = args.getInt(1);
+            this.registerService(callbackContext, serverName, serverPort);
+            break;
+        case "unRegisterService":
+            this.unRegisterService(callbackContext);
+            break;
+        case "stopNsd":
+            stopNsd(callbackContext);
+            break;
         }
         return true;
     }
+    
     private Handler mHandler;
-    private void initNsd(CallbackContext callbackContext) {
+    private void initNsd(CallbackContext callbackContext){
         final CallbackContext cbc = callbackContext;
         try {
-            mHandler = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    String type = msg.getData().getString("type");
-                    String message = msg.getData().getString("msg");
-
-                    JSONObject data = new JSONObject();
-                    try {
-                        data.put("type", new String(type));
-                        data.put("data", new String(message));
-                    } catch(JSONException e) {
-
+            if(null == mHandler){
+                mHandler = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        String type = msg.getData().getString("type");
+                        String message = msg.getData().getString("msg");
+    
+                        JSONObject data = new JSONObject();
+                        try {
+                            data.put("type", new String(type));
+                            data.put("data", new String(message));
+                        } catch(JSONException e) {
+                        }
+                        PluginResult result = new PluginResult(PluginResult.Status.OK, data);
+                        result.setKeepCallback(true);
+                        cbc.sendPluginResult(result);
                     }
-                    Log.d(TAG, type + ": " + message);
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, data);
-                    result.setKeepCallback(true);
-                    cbc.sendPluginResult(result);
+                };
+                if(null == mNsdHelper){
+                    mNsdHelper = new NsdHelper(cordova.getActivity(), mHandler);
+                    mNsdHelper.initializeNsd();
                 }
-            };
-            mNsdHelper = new NsdHelper(cordova.getActivity(), mHandler);
-            mNsdHelper.initializeNsd();
+                sendJSONObjectByHandler(cbc, "success", "Initialize NSD successful."); 
+            }else{
+                sendJSONObjectByHandler(cbc, "error", "Nsd Has been Initialized.");      
+            }
         } catch(Exception e) {
-            callbackContext.error("Error " + e);
-        }
+            sendJSONObjectByHandler(cbc, "error", "Exception: " + e);
+        }        
     }
-    private void startDiscovery(){
-        if(null != mNsdHelper){
-            mNsdHelper.startDiscovery();
+    private void sendJSONObjectByHandler(CallbackContext callbackContext, String type, String data){
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("type", type);
+            obj.put("data", data);
+        } catch(JSONException e1) {
+        }
+        PluginResult result;
+        if("error" == type){
+            result = new PluginResult(PluginResult.Status.ERROR, data);
         }else{
-            
+            result = new PluginResult(PluginResult.Status.OK, data);            
+        }
+        result.setKeepCallback(true);
+        callbackContext.sendPluginResult(result);        
+    }
+    
+    private void startDiscovery(CallbackContext callbackContext){
+        if((null != mNsdHelper) && (null != mHandler)){
+            mNsdHelper.startDiscovery();
+            callbackContext.success("In startDiscovery");
+        }else{
+            callbackContext.error("Please init NSD first.");        
         }
     }
-    private void stopDiscovery(){
-        mNsdHelper.stopDiscovery();
+    
+    private void stopDiscovery(CallbackContext callbackContext){
+        if((null != mNsdHelper) && (null != mHandler)){
+            mNsdHelper.stopDiscovery();
+            callbackContext.success("In  stopDiscovery");
+        }else{
+            callbackContext.error("Please init NSD first.");            
+        }
     }
-    private void registerService(String name, int port){
-        mNsdHelper.registerService(name, port);
+    
+    private void registerService(CallbackContext callbackContext, String name, int port){
+        if((null != mNsdHelper) && (null != mHandler)){
+            mNsdHelper.registerService(name, port);
+            callbackContext.success("In registerService: " + name + ":" + port);
+        }else{
+            callbackContext.error("Please init NSD first.");            
+        }
     }
-    private void unRegisterService(){
-        mNsdHelper.unRegisterService();
+    private void unRegisterService(CallbackContext callbackContext){
+        if((null != mNsdHelper) && (null != mHandler)){
+            mNsdHelper.unRegisterService();
+            callbackContext.success("In unRegisterService: " + serverName + ":" + serverPort);
+        }else{
+            callbackContext.error("Please init NSD first.");            
+        }
     }
     private void stopNsd(CallbackContext callbackContext) {
-        if (mNsdHelper != null) {
-            unRegisterService();
-            stopDiscovery();
+        if ((null != mNsdHelper) && (null != mHandler)) {
+            mNsdHelper.unRegisterService();
+            mNsdHelper.stopDiscovery();
+            mNsdHelper = null;
+            mHandler = null;
+            callbackContext.success("In stopNsd.");
+        }else{
+            callbackContext.error("Nsd has stopped.");            
         }
     }
+    
     public void onResolveService(View v){
         mNsdHelper.resolveServerInfo();
     }
 }
+
 

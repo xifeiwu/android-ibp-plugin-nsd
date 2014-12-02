@@ -8,8 +8,8 @@ NsdChat.prototype.startDiscovery = function(successCallback, errorCallback) {
 NsdChat.prototype.stopDiscovery = function(successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "stopDiscovery", []);
 };
-NsdChat.prototype.registerService = function(successCallback, errorCallback) {
-    cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "registerService", ['nsd-android-test', '8000']);
+NsdChat.prototype.registerService = function(successCallback, errorCallback, serviceInfo) {
+    cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "registerService", serviceInfo);
 };
 NsdChat.prototype.unRegisterService = function(successCallback, errorCallback) {
     cordova.exec(successCallback, errorCallback, "NsdChatPlugin", "unRegisterService", []);
