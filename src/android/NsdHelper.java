@@ -65,12 +65,12 @@ public class NsdHelper {
             @Override
             public void onServiceFound(NsdServiceInfo service) {
                 sendNotification("onServiceFound", NsdServiceInfoToJSON(service).toString());
-                addServerInfo(service);
+//                addServerInfo(service);
             }
             @Override
             public void onServiceLost(NsdServiceInfo service) {
                 sendNotification("onServiceLost", NsdServiceInfoToJSON(service).toString());
-                removeServerInfo(service);  
+//                removeServerInfo(service);
             }
             @Override
             public void onDiscoveryStopped(String serviceType) {
@@ -98,12 +98,11 @@ public class NsdHelper {
             }
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                sendNotification("onServiceResolved", NsdServiceInfoToJSON(serviceInfo).toString());
                 String oldName = serviceInfo.getServiceName();
                 String newName = oldName.replace("\\032", " ");
-//                mContext.show("oldName: " + oldName + " * " + "newName: " + newName );
                 serviceInfo.setServiceName(newName);                
-                reWriteServerInfo(serviceInfo);
+                sendNotification("onServiceResolved", NsdServiceInfoToJSON(serviceInfo).toString());
+//                reWriteServerInfo(serviceInfo);
             }
         };
     }
@@ -112,7 +111,6 @@ public class NsdHelper {
         mRegistrationListener = new NsdManager.RegistrationListener() {
             @Override
             public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-//                mServiceName = NsdServiceInfo.getServiceName();
                 sendNotification("onServiceRegistered", NsdServiceInfoToJSON(NsdServiceInfo).toString());
             }
             @Override
@@ -232,8 +230,7 @@ public class NsdHelper {
             info = (NsdServiceInfo) iter.next();
             sb.append(cnt + ". " + NsdServiceInfoToJSON(info) + "\n");
             cnt++;
-        }
-        sendNotification("showServerInfo", sb.toString());
+        }//sendNotification("showServerInfo", sb.toString());
     }
 
     private int indexcnt = 0;
