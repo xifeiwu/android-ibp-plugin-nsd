@@ -28,8 +28,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 @SuppressLint({ "HandlerLeak", "SimpleDateFormat" }) 
 public class NsdChatPlugin extends CordovaPlugin {
@@ -48,6 +46,9 @@ public class NsdChatPlugin extends CordovaPlugin {
             pluginResult.setKeepCallback(true);
             callbackContext.sendPluginResult(pluginResult);
             break;
+        case "stopNsd":
+            stopNsd(callbackContext);
+            break;
         case "startDiscovery":
             this.startDiscovery(callbackContext);
             break;
@@ -62,8 +63,8 @@ public class NsdChatPlugin extends CordovaPlugin {
         case "unRegisterService":
             this.unRegisterService(callbackContext);
             break;
-        case "stopNsd":
-            stopNsd(callbackContext);
+        case "resolveService":
+            this.resolveService(callbackContext, args.getString(0));
             break;
         }
         return true;
@@ -174,18 +175,20 @@ public class NsdChatPlugin extends CordovaPlugin {
         }
     }
     
-    public void resolveService(View v){
-        mNsdHelper.resolveServerInfo();
+    public void resolveService(CallbackContext callbackContext, String name){
+        Log.d("device name: ", name);
+        mNsdHelper.resolveInfoByName(name);
+        callbackContext.success("In resolveService. device name: " + name);
     }
     
     public void onPause(boolean multitasking) {
         activityStates("onPause");
         if ((null != mNsdHelper) && (null != mHandler)) {
+            this.sendByHandler("Notice", "stopNsd in onPause, Please initNsd first.");
             mNsdHelper.unRegisterService();
             mNsdHelper.stopDiscovery();
             mNsdHelper = null;
             mHandler = null;
-            this.sendByHandler("Notice", "stopNsd in onPause, Please initNsd first.");
         }
     }
     public void onResume(boolean multitasking) {
@@ -194,11 +197,11 @@ public class NsdChatPlugin extends CordovaPlugin {
     public void onDestroy() {
         activityStates("onDestroy");
         if ((null != mNsdHelper) && (null != mHandler)) {
+            this.sendByHandler("Notice", "stopNsd in onDestroy, Please initNsd first.");
             mNsdHelper.unRegisterService();
             mNsdHelper.stopDiscovery();
             mNsdHelper = null;
             mHandler = null;
-            this.sendByHandler("Notice", "stopNsd in onDestroy, Please initNsd first.");
         } 
     }
     private void activityStates(String state){
