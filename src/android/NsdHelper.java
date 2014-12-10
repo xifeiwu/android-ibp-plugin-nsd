@@ -32,22 +32,21 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-@SuppressLint("NewApi") 
+@SuppressLint("NewApi")
 public class NsdHelper {
 
     NsdManager mNsdManager;
     NsdManager.ResolveListener mResolveListener;
     NsdManager.DiscoveryListener mDiscoveryListener;
     NsdManager.RegistrationListener mRegistrationListener;
-    private final List<NsdServiceInfo> mServerInfoList = new ArrayList<NsdServiceInfo>();
+    private final List<NsdServiceInfo> mServiceInfoList = new ArrayList<NsdServiceInfo>();
 
     public static final String SERVICE_TYPE = "_http._tcp.";
     private Handler mHandler;
 
     public NsdHelper(Context context, Handler handler) {
         mHandler = handler;
-        mNsdManager = (NsdManager) context
-                .getSystemService(Context.NSD_SERVICE);
+        mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
     }
 
     public void initializeNsd() {
@@ -62,25 +61,30 @@ public class NsdHelper {
             public void onDiscoveryStarted(String regType) {
                 sendNotification("onDiscoveryStarted", "Service discovery started");
             }
+
             @Override
             public void onServiceFound(NsdServiceInfo service) {
                 sendNotification("onServiceFound", NsdServiceInfoToJSON(service).toString());
                 addServerInfo(service);
             }
+
             @Override
             public void onServiceLost(NsdServiceInfo service) {
                 sendNotification("onServiceLost", NsdServiceInfoToJSON(service).toString());
                 removeServerInfo(service);
             }
+
             @Override
             public void onDiscoveryStopped(String serviceType) {
                 sendNotification("onDiscoveryStopped", serviceType);
             }
+
             @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
                 sendNotification("onStartDiscoveryFailed", "Error code: " + errorCode);
                 mNsdManager.stopServiceDiscovery(this);
             }
+
             @Override
             public void onStopDiscoveryFailed(String serviceType, int errorCode) {
                 sendNotification("onStopDiscoveryFailed", "Error code: " + errorCode);
@@ -92,15 +96,15 @@ public class NsdHelper {
     public void initializeResolveListener() {
         mResolveListener = new NsdManager.ResolveListener() {
             @Override
-            public void onResolveFailed(NsdServiceInfo serviceInfo,
-                    int errorCode) {
+            public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
                 sendNotification("onResolveFailed", "Error code: " + errorCode);
             }
+
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 String oldName = serviceInfo.getServiceName();
                 String newName = oldName.replace("\\032", " ");
-                serviceInfo.setServiceName(newName);                
+                serviceInfo.setServiceName(newName);
                 sendNotification("onServiceResolved", NsdServiceInfoToJSON(serviceInfo).toString());
                 reWriteServerInfo(serviceInfo);
             }
@@ -113,56 +117,59 @@ public class NsdHelper {
             public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
                 sendNotification("onServiceRegistered", NsdServiceInfoToJSON(NsdServiceInfo).toString());
             }
+
             @Override
             public void onRegistrationFailed(NsdServiceInfo arg0, int arg1) {
                 sendNotification("onRegistrationFailed", NsdServiceInfoToJSON(arg0).toString());
             }
+
             @Override
             public void onServiceUnregistered(NsdServiceInfo arg0) {
                 sendNotification("onServiceUnregistered", NsdServiceInfoToJSON(arg0).toString());
             }
+
             @Override
-            public void onUnregistrationFailed(NsdServiceInfo serviceInfo,
-                    int errorCode) {
+            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
                 sendNotification("onUnregistrationFailed", "Error code: " + errorCode);
             }
         };
     }
 
     private boolean isServiceRegistered = false;
+
     public void registerService(String name, int port) {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setPort(port);
         serviceInfo.setServiceName(name);
         serviceInfo.setServiceType(SERVICE_TYPE);
-        mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD,
-                mRegistrationListener);
+        mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
         isServiceRegistered = true;
     }
+
     public void unRegisterService() {
-        if(isServiceRegistered){
+        if (isServiceRegistered) {
             mNsdManager.unregisterService(mRegistrationListener);
         }
         isServiceRegistered = false;
     }
 
     private boolean isDiscoverServicesStarted = false;
+
     public void startDiscovery() {
-        mNsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD,
-                mDiscoveryListener);
+        mNsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
         isDiscoverServicesStarted = true;
     }
 
     public void stopDiscovery() {
-        if(isDiscoverServicesStarted && mDiscoveryListener != null){
+        if (isDiscoverServicesStarted && mDiscoveryListener != null) {
             mNsdManager.stopServiceDiscovery(mDiscoveryListener);
         }
-//        mNsdManager = null;
-        mServerInfoList.clear();
+        // mNsdManager = null;
+        mServiceInfoList.clear();
         isDiscoverServicesStarted = false;
     }
 
-    private JSONObject NsdServiceInfoToJSON(NsdServiceInfo info){
+    private JSONObject NsdServiceInfoToJSON(NsdServiceInfo info) {
         String name = info.getServiceName();
         String type = info.getServiceType();
         InetAddress host = info.getHost();
@@ -174,8 +181,9 @@ public class NsdHelper {
         JSONObject jsonObj = new JSONObject(map);
         return jsonObj;
     }
+
     public void addServerInfo(NsdServiceInfo info) {
-        Iterator<NsdServiceInfo> iter = mServerInfoList.iterator();
+        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
         NsdServiceInfo element;
         boolean isExist = false;
         while (iter.hasNext()) {
@@ -186,27 +194,29 @@ public class NsdHelper {
             }
         }
         if (!isExist) {
-            mServerInfoList.add(info);
+            mServiceInfoList.add(info);
         }
     }
+
     public void reWriteServerInfo(NsdServiceInfo info) {
         int index = 0;
         boolean isExist = false;
-        while(index < mServerInfoList.size()){
-            if(mServerInfoList.get(index).getServiceName().equals(info.getServiceName())){
+        while (index < mServiceInfoList.size()) {
+            if (mServiceInfoList.get(index).getServiceName().equals(info.getServiceName())) {
                 isExist = true;
                 break;
             }
             index++;
         }
         if (isExist) {
-            mServerInfoList.set(index, info);
-        }else{
-            mServerInfoList.add(info);            
+            mServiceInfoList.set(index, info);
+        } else {
+            mServiceInfoList.add(info);
         }
     }
+
     public void removeServerInfo(NsdServiceInfo info) {
-        Iterator<NsdServiceInfo> iter = mServerInfoList.iterator();
+        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
         NsdServiceInfo element = null;
         boolean isExist = false;
         while (iter.hasNext()) {
@@ -217,56 +227,58 @@ public class NsdHelper {
             }
         }
         if (isExist) {
-            mServerInfoList.remove(element);
+            mServiceInfoList.remove(element);
         }
     }
 
     public void showServerInfo() {
-        Iterator<NsdServiceInfo> iter = mServerInfoList.iterator();
+        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
         NsdServiceInfo info;
         int cnt = 1;
         StringBuffer sb = new StringBuffer();
-        sb.append("========there are " + mServerInfoList.size() + " elements========\n");
+        sb.append("========there are " + mServiceInfoList.size() + " elements========\n");
         while (iter.hasNext()) {
             info = (NsdServiceInfo) iter.next();
             sb.append(cnt + ". " + NsdServiceInfoToJSON(info) + "\n");
             cnt++;
-        }//sendNotification("showServerInfo", sb.toString());
+        }// sendNotification("showServerInfo", sb.toString());
     }
 
     private int indexcnt = 0;
-    public void resolveServerInfo(){
-        if(indexcnt < mServerInfoList.size()){
-            NsdServiceInfo info = mServerInfoList.get(indexcnt);
-            if(info.getHost() == null){
+
+    public void resolveServerInfo() {
+        if (indexcnt < mServiceInfoList.size()) {
+            NsdServiceInfo info = mServiceInfoList.get(indexcnt);
+            if (info.getHost() == null) {
                 mNsdManager.resolveService(info, mResolveListener);
-            }else{
+            } else {
                 sendNotification("resolveServerInfo", "No Need To Resolve.");
             }
             indexcnt++;
-        }else{
+        } else {
             indexcnt = 0;
         }
     }
-    public void resolveInfoByName(String name){
+
+    public void resolveInfoByName(String name) {
         int index = 0;
         NsdServiceInfo element = null;
-        while(index < mServerInfoList.size()){
-            if(mServerInfoList.get(index).getServiceName().equals(name)){
-                element = mServerInfoList.get(index);
+        while (index < mServiceInfoList.size()) {
+            if (mServiceInfoList.get(index).getServiceName().equals(name)) {
+                element = mServiceInfoList.get(index);
                 break;
             }
             index++;
         }
         if (null != element) {
-            if(element.getHost() == null){
+            if (element.getHost() == null) {
                 mNsdManager.resolveService(element, mResolveListener);
-            }else{
+            } else {
                 sendNotification("resolveInfoByName", "No Need To Resolve.");
             }
         }
     }
-    
+
     public void sendNotification(String type, String msg) {
         Bundle messageBundle = new Bundle();
         messageBundle.putString("type", type);
@@ -275,6 +287,7 @@ public class NsdHelper {
         message.setData(messageBundle);
         mHandler.sendMessage(message);
     }
+
     public void sendNotification(String type, JSONObject jsonObj) {
         Bundle messageBundle = new Bundle();
         messageBundle.putString("type", type);
@@ -283,6 +296,7 @@ public class NsdHelper {
         message.setData(messageBundle);
         mHandler.sendMessage(message);
     }
+
     public void sendNotification(String type, JSONArray jsonArray) {
         Bundle messageBundle = new Bundle();
         messageBundle.putString("type", type);
