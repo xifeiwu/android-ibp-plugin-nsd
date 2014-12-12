@@ -64,14 +64,12 @@ public class NsdHelper {
 
             @Override
             public void onServiceFound(NsdServiceInfo service) {
-                sendNotification("onServiceFound", NsdServiceInfoToJSON(service).toString());
-                addServerInfo(service);
+                addServiceInfo(service);
             }
 
             @Override
             public void onServiceLost(NsdServiceInfo service) {
-                sendNotification("onServiceLost", NsdServiceInfoToJSON(service).toString());
-                removeServerInfo(service);
+                removeServiceInfo(service);
             }
 
             @Override
@@ -105,8 +103,7 @@ public class NsdHelper {
                 String oldName = serviceInfo.getServiceName();
                 String newName = oldName.replace("\\032", " ");
                 serviceInfo.setServiceName(newName);
-                sendNotification("onServiceResolved", NsdServiceInfoToJSON(serviceInfo).toString());
-                reWriteServerInfo(serviceInfo);
+                reWriteServiceInfo(serviceInfo);
             }
         };
     }
@@ -169,97 +166,6 @@ public class NsdHelper {
         isDiscoverServicesStarted = false;
     }
 
-    private JSONObject NsdServiceInfoToJSON(NsdServiceInfo info) {
-        String name = info.getServiceName();
-        String type = info.getServiceType();
-        InetAddress host = info.getHost();
-        int port = info.getPort();
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("name", name);
-        map.put("type", type);
-        map.put("host", ((host == null) ? "null" : host.getHostAddress() + ":" + port));
-        JSONObject jsonObj = new JSONObject(map);
-        return jsonObj;
-    }
-
-    public void addServerInfo(NsdServiceInfo info) {
-        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
-        NsdServiceInfo element;
-        boolean isExist = false;
-        while (iter.hasNext()) {
-            element = (NsdServiceInfo) iter.next();
-            if (element.getServiceName().equals(info.getServiceName())) {
-                isExist = true;
-                break;
-            }
-        }
-        if (!isExist) {
-            mServiceInfoList.add(info);
-        }
-    }
-
-    public void reWriteServerInfo(NsdServiceInfo info) {
-        int index = 0;
-        boolean isExist = false;
-        while (index < mServiceInfoList.size()) {
-            if (mServiceInfoList.get(index).getServiceName().equals(info.getServiceName())) {
-                isExist = true;
-                break;
-            }
-            index++;
-        }
-        if (isExist) {
-            mServiceInfoList.set(index, info);
-        } else {
-            mServiceInfoList.add(info);
-        }
-    }
-
-    public void removeServerInfo(NsdServiceInfo info) {
-        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
-        NsdServiceInfo element = null;
-        boolean isExist = false;
-        while (iter.hasNext()) {
-            element = (NsdServiceInfo) iter.next();
-            if (element.getServiceName().equals(info.getServiceName())) {
-                isExist = true;
-                break;
-            }
-        }
-        if (isExist) {
-            mServiceInfoList.remove(element);
-        }
-    }
-
-    public void showServerInfo() {
-        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
-        NsdServiceInfo info;
-        int cnt = 1;
-        StringBuffer sb = new StringBuffer();
-        sb.append("========there are " + mServiceInfoList.size() + " elements========\n");
-        while (iter.hasNext()) {
-            info = (NsdServiceInfo) iter.next();
-            sb.append(cnt + ". " + NsdServiceInfoToJSON(info) + "\n");
-            cnt++;
-        }// sendNotification("showServerInfo", sb.toString());
-    }
-
-    private int indexcnt = 0;
-
-    public void resolveServerInfo() {
-        if (indexcnt < mServiceInfoList.size()) {
-            NsdServiceInfo info = mServiceInfoList.get(indexcnt);
-            if (info.getHost() == null) {
-                mNsdManager.resolveService(info, mResolveListener);
-            } else {
-                sendNotification("resolveServerInfo", "No Need To Resolve.");
-            }
-            indexcnt++;
-        } else {
-            indexcnt = 0;
-        }
-    }
-
     public void resolveInfoByName(String name) {
         int index = 0;
         NsdServiceInfo element = null;
@@ -277,6 +183,99 @@ public class NsdHelper {
                 sendNotification("resolveInfoByName", "No Need To Resolve.");
             }
         }
+    }
+
+    private int indexcnt = 0;
+    public void resolveServiceInfo() {
+        if (indexcnt < mServiceInfoList.size()) {
+            NsdServiceInfo info = mServiceInfoList.get(indexcnt);
+            if (info.getHost() == null) {
+                mNsdManager.resolveService(info, mResolveListener);
+            } else {
+                sendNotification("resolveServiceInfo", "No Need To Resolve.");
+            }
+            indexcnt++;
+        } else {
+            indexcnt = 0;
+        }
+    }
+
+    private JSONObject NsdServiceInfoToJSON(NsdServiceInfo info) {
+        String name = info.getServiceName();
+        String type = info.getServiceType();
+        InetAddress host = info.getHost();
+        int port = info.getPort();
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("name", name);
+        map.put("type", type);
+        map.put("host", ((host == null) ? "null" : host.getHostAddress() + ":" + port));
+        JSONObject jsonObj = new JSONObject(map);
+        return jsonObj;
+    }
+
+    public void addServiceInfo(NsdServiceInfo info) {
+        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
+        NsdServiceInfo element;
+        boolean isExist = false;
+        while (iter.hasNext()) {
+            element = (NsdServiceInfo) iter.next();
+            if (element.getServiceName().equals(info.getServiceName())) {
+                isExist = true;
+                break;
+            }
+        }
+        if (!isExist) {
+            mServiceInfoList.add(info);
+            sendNotification("onServiceFound", NsdServiceInfoToJSON(info).toString());
+        }
+    }
+
+    public void reWriteServiceInfo(NsdServiceInfo info) {
+        int index = 0;
+        boolean isExist = false;
+        while (index < mServiceInfoList.size()) {
+            if (mServiceInfoList.get(index).getServiceName().equals(info.getServiceName())) {
+                isExist = true;
+                break;
+            }
+            index++;
+        }
+        if (isExist) {
+            mServiceInfoList.set(index, info);
+        } else {
+            mServiceInfoList.add(info);
+        }
+        sendNotification("onServiceResolved", NsdServiceInfoToJSON(info).toString());
+    }
+
+    public void removeServiceInfo(NsdServiceInfo info) {
+        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
+        NsdServiceInfo element = null;
+        boolean isExist = false;
+        while (iter.hasNext()) {
+            element = (NsdServiceInfo) iter.next();
+            if (element.getServiceName().equals(info.getServiceName())) {
+                isExist = true;
+                break;
+            }
+        }
+        if (isExist) {
+            mServiceInfoList.remove(element);
+            sendNotification("onServiceLost", NsdServiceInfoToJSON(info).toString());
+        }
+    }
+
+    public void showServiceInfo() {
+        Iterator<NsdServiceInfo> iter = mServiceInfoList.iterator();
+        NsdServiceInfo info;
+        int cnt = 1;
+        StringBuffer sb = new StringBuffer();
+        sb.append("========there are " + mServiceInfoList.size() + " elements========\n");
+        while (iter.hasNext()) {
+            info = (NsdServiceInfo) iter.next();
+            sb.append(cnt + ". " + NsdServiceInfoToJSON(info) + "\n");
+            cnt++;
+        }// sendNotification("showServiceInfo", sb.toString());
     }
 
     public void sendNotification(String type, String msg) {
