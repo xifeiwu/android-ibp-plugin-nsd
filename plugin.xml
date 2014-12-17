@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>  
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"  
-    id="ibp.plugin.nsdchat"  
-    version="0.0.1">  
-    <name>nsdchat</name>  
+    id="ibp.plugin.nsd"  
+    version="0.0.1">
+    <name>NSD</name>  
     <description>Network Service Discovery</description>  
     <author>xifei</author>  
     <license>Apache 2.0 License</license>  
@@ -10,18 +10,18 @@
         <engine name="cordova" version=">=3.0.0" />  
     </engines>  
 
-    <js-module src="www/nsdchat.js" name="nsdchat">
-        <clobbers target="NsdChat" />
+    <js-module src="www/nsd.js" name="nsd">
+        <clobbers target="NSD" />
     </js-module>
 
     <platform name="android">
         <config-file target="config.xml" parent="/*">
-            <feature name="NsdChatPlugin">
-                <param name="android-package" value="ibp.plugin.nsdchat.NsdChatPlugin"/>
+            <feature name="NSDPlugin">
+                <param name="android-package" value="ibp.plugin.nsd.NSDPlugin"/>
             </feature>
         </config-file>
-        <source-file src="src/android/NsdChatPlugin.java" target-dir="src/ibp/plugin/nsdchat" />
-        <source-file src="src/android/NsdHelper.java" target-dir="src/ibp/plugin/nsdchat" />
+        <source-file src="src/android/NSDPlugin.java" target-dir="src/ibp/plugin/nsd" />
+        <source-file src="src/android/NSDHelper.java" target-dir="src/ibp/plugin/nsd" />
     </platform>
   
 </plugin>  
